@@ -5,3 +5,4 @@ authors = ["Drew Chandler <drew@kongregate.com>"]
 
 [dependencies]
 nom = "^1.2.3"
+rustyline = "0.2.3"
