@@ -7,6 +7,7 @@ use nom::IResult::Done;
 
 mod sexp;
 mod parser;
+mod env;
 
 fn main() {
     let mut rl = Editor::new();

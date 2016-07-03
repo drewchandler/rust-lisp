@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Sexp {
     Number(f64),
     String(String),
