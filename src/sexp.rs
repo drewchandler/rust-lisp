@@ -1,4 +1,5 @@
 use std::fmt;
+use super::env::{self, Env};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Sexp {
@@ -8,6 +9,38 @@ pub enum Sexp {
     List(Vec<Sexp>),
     BuiltInFunc(fn(Vec<Sexp>) -> SexpResult),
     Nil,
+}
+
+pub type SexpResult = Result<Sexp, String>;
+
+impl Sexp {
+    pub fn eval(&self, env: &Env) -> SexpResult {
+        match *self {
+            ref s @ Sexp::Number(_) |
+            ref s @ Sexp::String(_) |
+            ref s @ Sexp::BuiltInFunc(_) |
+            ref s @ Sexp::Nil => Ok(s.clone()),
+            Sexp::Symbol(ref s) => {
+                match env::env_get(&env, &s) {
+                    Some(v) => Ok(v.clone()),
+                    None => Err(format!("The variable {} is unbound", &s))
+                }
+            },
+            Sexp::List(ref v) => {
+                if v.len() == 0 { return Ok(Sexp::Nil) }
+
+                let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
+                evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
+            }
+        }
+    }
+
+    fn apply(&self, args: Vec<Sexp>, env: &Env) -> SexpResult {
+        match *self {
+            Sexp::BuiltInFunc(f) => f(args),
+            _ => Err("Illegal function call".to_string())
+        }
+    }
 }
 
 impl fmt::Display for Sexp {
@@ -27,5 +60,80 @@ impl fmt::Display for Sexp {
             },
             Sexp::Nil => write!(f, "NIL")
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Sexp,SexpResult};
+    use super::super::env;
+
+    #[test]
+    fn test_eval_with_self_evaluating_sexps() {
+        let env = env::env_new(None);
+
+        assert_eq!(Sexp::Number(5.).eval(&env), Ok(Sexp::Number(5.)));
+        assert_eq!(Sexp::String("str".to_string()).eval(&env), Ok(Sexp::String("str".to_string())));
+        assert_eq!(Sexp::Nil.eval(&env), Ok(Sexp::Nil));
+    }
+
+    #[test]
+    fn test_eval_with_symbol() {
+        let env = env::env_new(None);
+
+        assert_eq!(
+            Sexp::Symbol("sym".to_string()).eval(&env),
+            Err("The variable sym is unbound".to_string())
+        );
+
+        env::env_set(&env, "sym".to_string(), Sexp::Number(5.));
+        assert_eq!(Sexp::Symbol("sym".to_string()).eval(&env), Ok(Sexp::Number(5.)));
+    }
+
+    #[test]
+    fn test_eval_with_empty_list() {
+        let env = env::env_new(None);
+
+        assert_eq!(Sexp::List(vec![]).eval(&env), Ok(Sexp::Nil));
+    }
+
+    #[test]
+    fn test_eval_with_list_with_func_in_front() {
+        let env = env::env_new(None);
+        env::env_set(&env, "func".to_string(), Sexp::BuiltInFunc(ok));
+
+        assert_eq!(
+            Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
+            Ok(Sexp::Nil)
+        );
+    }
+
+    #[test]
+    fn test_eval_with_list_with_func_in_front_that_errors() {
+        let env = env::env_new(None);
+        env::env_set(&env, "func".to_string(), Sexp::BuiltInFunc(err));
+
+        assert_eq!(
+            Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
+            Err("BOOM".to_string())
+        );
+    }
+
+    #[test]
+    fn test_eval_with_list_non_func() {
+        let env = env::env_new(None);
+
+        assert_eq!(
+            Sexp::List(vec![Sexp::Number(5.)]).eval(&env),
+            Err("Illegal function call".to_string())
+        );
+    }
+
+    fn ok(_: Vec<Sexp>) -> SexpResult {
+        Ok(Sexp::Nil)
+    }
+
+    fn err(_: Vec<Sexp>) -> SexpResult {
+        Err("BOOM".to_string())
     }
 }

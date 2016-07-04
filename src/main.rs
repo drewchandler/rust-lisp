@@ -12,6 +12,7 @@ mod env;
 fn main() {
     let mut rl = Editor::new();
     let _ = rl.load_history("history.txt");
+    let root = env::env_new(None);
 
     loop {
         let readline = rl.readline("rl> ");
@@ -20,8 +21,13 @@ fn main() {
                 rl.add_history_entry(&line);
 
                 match parser::sexp(line.as_bytes()) {
-                    Done(_, s) => println!("{}", s),
-                    _ => println!("Error!")
+                    Done(_, s) => {
+                        match s.eval(&root) {
+                            Ok(s) => println!("{}", s),
+                            Err(e) => println!("ERROR: {}", e)
+                        };
+                    },
+                    _ => println!("ERROR: Parse error")
                 };
             },
             _ => {
