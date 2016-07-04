@@ -6,6 +6,7 @@ pub enum Sexp {
     String(String),
     Symbol(String),
     List(Vec<Sexp>),
+    BuiltInFunc(fn(Vec<Sexp>) -> SexpResult),
     Nil,
 }
 
@@ -15,6 +16,7 @@ impl fmt::Display for Sexp {
             Sexp::Number(ref n) => write!(f, "{}", n),
             Sexp::String(ref s) => write!(f, "\"{}\"", s),
             Sexp::Symbol(ref s) => write!(f, "{}", s),
+            Sexp::BuiltInFunc(_) => write!(f, "<fn>"),
             Sexp::List(ref v) => {
                 try!(write!(f, "("));
                 for (i, s) in v.iter().enumerate() {
