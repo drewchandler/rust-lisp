@@ -8,11 +8,12 @@ use nom::IResult::Done;
 mod sexp;
 mod parser;
 mod env;
+mod built_in;
 
 fn main() {
     let mut rl = Editor::new();
     let _ = rl.load_history("history.txt");
-    let root = env::env_new(None);
+    let root = built_in::default_env();
 
     loop {
         let readline = rl.readline("rl> ");
