@@ -6,6 +6,7 @@ pub enum Sexp {
     String(String),
     Symbol(String),
     List(Vec<Sexp>),
+    Nil,
 }
 
 impl fmt::Display for Sexp {
@@ -21,7 +22,8 @@ impl fmt::Display for Sexp {
                     try!(write!(f, "{}", s));
                 }
                 write!(f, ")")
-            }
+            },
+            Sexp::Nil => write!(f, "NIL")
         }
     }
 }
