@@ -25,12 +25,12 @@ fn main() {
                     Done(_, s) => {
                         match s.eval(&root) {
                             Ok(s) => println!("{}", s),
-                            Err(e) => println!("ERROR: {}", e)
+                            Err(e) => println!("ERROR: {}", e),
                         };
-                    },
-                    _ => println!("ERROR: Parse error")
+                    }
+                    _ => println!("ERROR: Parse error"),
                 };
-            },
+            }
             _ => {
                 println!("exiting...");
                 break;

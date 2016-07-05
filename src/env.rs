@@ -5,14 +5,14 @@ use super::sexp::Sexp;
 
 pub struct EnvData {
     data: HashMap<String, Sexp>,
-    enclosing: Option<Env>
+    enclosing: Option<Env>,
 }
 
 impl EnvData {
     fn new(enclosing: Option<Env>) -> EnvData {
         EnvData {
             data: HashMap::new(),
-            enclosing: enclosing
+            enclosing: enclosing,
         }
     }
 }
@@ -35,7 +35,7 @@ pub fn env_get(env: &Env, k: &String) -> Option<Sexp> {
         None => {
             match e.enclosing {
                 Some(ref enc) => env_get(&enc, k),
-                None => None
+                None => None,
             }
         }
     }

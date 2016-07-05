@@ -23,11 +23,13 @@ impl Sexp {
             Sexp::Symbol(ref s) => {
                 match env::env_get(&env, &s) {
                     Some(v) => Ok(v.clone()),
-                    None => Err(format!("The variable {} is unbound", &s))
+                    None => Err(format!("The variable {} is unbound", &s)),
                 }
-            },
+            }
             Sexp::List(ref v) => {
-                if v.len() == 0 { return Ok(Sexp::Nil) }
+                if v.len() == 0 {
+                    return Ok(Sexp::Nil);
+                }
 
                 let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
                 evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
@@ -38,7 +40,7 @@ impl Sexp {
     fn apply(&self, args: Vec<Sexp>, env: &Env) -> SexpResult {
         match *self {
             Sexp::BuiltInFunc(f) => f(args),
-            _ => Err("Illegal function call".to_string())
+            _ => Err("Illegal function call".to_string()),
         }
     }
 }
@@ -53,19 +55,21 @@ impl fmt::Display for Sexp {
             Sexp::List(ref v) => {
                 try!(write!(f, "("));
                 for (i, s) in v.iter().enumerate() {
-                    if i > 0 { try!(write!(f, " ")); }
+                    if i > 0 {
+                        try!(write!(f, " "));
+                    }
                     try!(write!(f, "{}", s));
                 }
                 write!(f, ")")
-            },
-            Sexp::Nil => write!(f, "NIL")
+            }
+            Sexp::Nil => write!(f, "NIL"),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Sexp,SexpResult};
+    use super::{Sexp, SexpResult};
     use super::super::env;
 
     #[test]
@@ -73,7 +77,8 @@ mod tests {
         let env = env::env_new(None);
 
         assert_eq!(Sexp::Number(5.).eval(&env), Ok(Sexp::Number(5.)));
-        assert_eq!(Sexp::String("str".to_string()).eval(&env), Ok(Sexp::String("str".to_string())));
+        assert_eq!(Sexp::String("str".to_string()).eval(&env),
+                   Ok(Sexp::String("str".to_string())));
         assert_eq!(Sexp::Nil.eval(&env), Ok(Sexp::Nil));
     }
 
@@ -81,13 +86,12 @@ mod tests {
     fn test_eval_with_symbol() {
         let env = env::env_new(None);
 
-        assert_eq!(
-            Sexp::Symbol("sym".to_string()).eval(&env),
-            Err("The variable sym is unbound".to_string())
-        );
+        assert_eq!(Sexp::Symbol("sym".to_string()).eval(&env),
+                   Err("The variable sym is unbound".to_string()));
 
         env::env_set(&env, "sym".to_string(), Sexp::Number(5.));
-        assert_eq!(Sexp::Symbol("sym".to_string()).eval(&env), Ok(Sexp::Number(5.)));
+        assert_eq!(Sexp::Symbol("sym".to_string()).eval(&env),
+                   Ok(Sexp::Number(5.)));
     }
 
     #[test]
@@ -102,10 +106,8 @@ mod tests {
         let env = env::env_new(None);
         env::env_set(&env, "func".to_string(), Sexp::BuiltInFunc(ok));
 
-        assert_eq!(
-            Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
-            Ok(Sexp::Nil)
-        );
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
+                   Ok(Sexp::Nil));
     }
 
     #[test]
@@ -113,20 +115,16 @@ mod tests {
         let env = env::env_new(None);
         env::env_set(&env, "func".to_string(), Sexp::BuiltInFunc(err));
 
-        assert_eq!(
-            Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
-            Err("BOOM".to_string())
-        );
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
+                   Err("BOOM".to_string()));
     }
 
     #[test]
     fn test_eval_with_list_non_func() {
         let env = env::env_new(None);
 
-        assert_eq!(
-            Sexp::List(vec![Sexp::Number(5.)]).eval(&env),
-            Err("Illegal function call".to_string())
-        );
+        assert_eq!(Sexp::List(vec![Sexp::Number(5.)]).eval(&env),
+                   Err("Illegal function call".to_string()));
     }
 
     fn ok(_: Vec<Sexp>) -> SexpResult {
