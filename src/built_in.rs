@@ -1,17 +1,27 @@
 use super::env::{self, Env};
 use super::sexp::{Sexp, SexpResult};
 
-fn add(args: Vec<Sexp>) -> SexpResult {
-    let numbers: Result<Vec<&f64>, String> = args.iter()
-        .map(|i| {
-            match *i {
-                Sexp::Number(ref n) => Ok(n),
-                ref v @ _ => Err(format!("Argument {} is not a number", v)),
-            }
-        })
-        .collect();
+macro_rules! unpack_args {
+    ($src:expr, => $t:path) => {{
+        let tmp: Result<Vec<_>, String> = $src.iter()
+            .map(|i| {
+                match *i {
+                    $t(ref n) => Ok(*n),
+                    ref v @ _ => Err(format!("Argument error: {}", v)),
+                }
+            })
+            .collect();
 
-    numbers.map(|ns| Sexp::Number(ns.iter().fold(0., |sum, n| sum + *n)))
+        if let Err(m) = tmp { return Err(m) }
+
+        tmp.unwrap()
+    }}
+}
+
+fn add(args: Vec<Sexp>) -> SexpResult {
+    let ns = unpack_args!(args, => Sexp::Number);
+
+    Ok(Sexp::Number(ns.iter().fold(0., |sum, n| sum + *n)))
 }
 
 pub fn default_env() -> Env {
@@ -33,6 +43,6 @@ mod tests {
         assert_eq!(super::add(vec![Sexp::Number(1.),
                                    Sexp::Number(2.),
                                    Sexp::String("3".to_string())]),
-                   Err("Argument \"3\" is not a number".to_string()));
+                   Err("Argument error: \"3\"".to_string()));
     }
 }
