@@ -31,8 +31,25 @@ impl Sexp {
                     return Ok(Sexp::Nil);
                 }
 
-                let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
-                evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
+                match special_form(&v) {
+                    Some("defparameter") => {
+                        match v[1] {
+                            Sexp::Symbol(ref s) => {
+                                v[2].eval(&env).and_then(|evaled| {
+                                    env::env_set(&env, s.clone(), evaled);
+                                    Ok(Sexp::Symbol(s.clone()))
+                                })
+                            },
+                            ref e @ _ => {
+                                Err(format!("{} is not a legal info name", e))
+                            }
+                        }
+                    },
+                    _ => {
+                        let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
+                        evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
+                    },
+                }
             }
         }
     }
@@ -64,6 +81,18 @@ impl fmt::Display for Sexp {
             }
             Sexp::Nil => write!(f, "NIL"),
         }
+    }
+}
+
+fn special_form(v: &Vec<Sexp>) -> Option<&str> {
+    match v[0] {
+        Sexp::Symbol(ref s) => {
+            match &s[..] {
+                s @ "defparameter" => Some(&s),
+                _ => None,
+            }
+        },
+        _ => None,
     }
 }
 
@@ -125,6 +154,22 @@ mod tests {
 
         assert_eq!(Sexp::List(vec![Sexp::Number(5.)]).eval(&env),
                    Err("Illegal function call".to_string()));
+    }
+
+    #[test]
+    fn test_eval_with_defparameter() {
+        let env = env::env_new(None);
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("defparameter".to_string()),
+                                   Sexp::Symbol("a".to_string()),
+                                   Sexp::Number(5.)]).eval(&env),
+                   Ok(Sexp::Symbol("a".to_string())));
+        assert_eq!(env::env_get(&env, &"a".to_string()), Some(Sexp::Number(5.)));
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("defparameter".to_string()),
+                                   Sexp::Number(5.),
+                                   Sexp::Number(5.)]).eval(&env),
+                   Err("5 is not a legal info name".to_string()));
     }
 
     fn ok(_: Vec<Sexp>) -> SexpResult {
