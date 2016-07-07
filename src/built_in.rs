@@ -74,6 +74,8 @@ fn multiply(args: Vec<Sexp>) -> SexpResult {
 
 pub fn default_env() -> Env {
     let env = env::env_new(None);
+    env::env_set(&env, "t".to_string(), Sexp::True);
+
     env::env_set(&env, "+".to_string(), Sexp::BuiltInFunc(add));
     env::env_set(&env, "-".to_string(), Sexp::BuiltInFunc(subtract));
     env::env_set(&env, "*".to_string(), Sexp::BuiltInFunc(multiply));

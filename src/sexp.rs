@@ -9,6 +9,7 @@ pub enum Sexp {
     List(Vec<Sexp>),
     BuiltInFunc(fn(Vec<Sexp>) -> SexpResult),
     Nil,
+    True
 }
 
 pub type SexpResult = Result<Sexp, String>;
@@ -19,7 +20,8 @@ impl Sexp {
             ref s @ Sexp::Number(_) |
             ref s @ Sexp::String(_) |
             ref s @ Sexp::BuiltInFunc(_) |
-            ref s @ Sexp::Nil => Ok(s.clone()),
+            ref s @ Sexp::Nil |
+            ref s @ Sexp::True => Ok(s.clone()),
             Sexp::Symbol(ref s) => {
                 match env::env_get(&env, &s) {
                     Some(v) => Ok(v.clone()),
@@ -80,6 +82,7 @@ impl fmt::Display for Sexp {
                 write!(f, ")")
             }
             Sexp::Nil => write!(f, "NIL"),
+            Sexp::True => write!(f, "T"),
         }
     }
 }
@@ -109,6 +112,7 @@ mod tests {
         assert_eq!(Sexp::String("str".to_string()).eval(&env),
                    Ok(Sexp::String("str".to_string())));
         assert_eq!(Sexp::Nil.eval(&env), Ok(Sexp::Nil));
+        assert_eq!(Sexp::True.eval(&env), Ok(Sexp::True));
     }
 
     #[test]
