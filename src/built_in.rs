@@ -72,6 +72,16 @@ fn multiply(args: Vec<Sexp>) -> SexpResult {
     Ok(Sexp::Number(rest.iter().fold(first, |result, n| result * *n)))
 }
 
+fn divide(args: Vec<Sexp>) -> SexpResult {
+    let (first, rest) = unpack_args!(args, 1 Sexp::Number, N Sexp::Number);
+
+    if rest.iter().any(|&n| n == 0.) {
+        return Err("Division by zero".to_string())
+    }
+
+    Ok(Sexp::Number(rest.iter().fold(first, |result, n| result / *n)))
+}
+
 pub fn default_env() -> Env {
     let env = env::env_new(None);
     env::env_set(&env, "t".to_string(), Sexp::True);
@@ -79,6 +89,7 @@ pub fn default_env() -> Env {
     env::env_set(&env, "+".to_string(), Sexp::BuiltInFunc(add));
     env::env_set(&env, "-".to_string(), Sexp::BuiltInFunc(subtract));
     env::env_set(&env, "*".to_string(), Sexp::BuiltInFunc(multiply));
+    env::env_set(&env, "/".to_string(), Sexp::BuiltInFunc(divide));
 
     env
 }
@@ -113,5 +124,17 @@ mod tests {
                    Ok(Sexp::Number(6.)));
         assert_eq!(super::multiply(vec![Sexp::String("3".to_string())]),
                    Err("Argument error: \"3\"".to_string()));
+    }
+
+    #[test]
+    fn test_divide() {
+        assert_eq!(super::divide(vec![Sexp::Number(1.)]), Ok(Sexp::Number(1.)));
+        assert_eq!(super::divide(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
+                   Ok(Sexp::Number(1.0/6.0)));
+        assert_eq!(super::divide(vec![]), Err("Invalid number of arguments: 0".to_string()));
+        assert_eq!(super::divide(vec![Sexp::String("3".to_string())]),
+                   Err("Argument error: \"3\"".to_string()));
+        assert_eq!(super::divide(vec![Sexp::Number(1.), Sexp::Number(0.)]),
+                   Err("Division by zero".to_string()));
     }
 }
