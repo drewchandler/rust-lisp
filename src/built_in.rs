@@ -92,9 +92,7 @@ mod tests {
         assert_eq!(super::add(vec![Sexp::Number(1.)]), Ok(Sexp::Number(1.)));
         assert_eq!(super::add(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
                    Ok(Sexp::Number(6.)));
-        assert_eq!(super::add(vec![Sexp::Number(1.),
-                                   Sexp::Number(2.),
-                                   Sexp::String("3".to_string())]),
+        assert_eq!(super::add(vec![Sexp::String("3".to_string())]),
                    Err("Argument error: \"3\"".to_string()));
     }
 
@@ -103,9 +101,7 @@ mod tests {
         assert_eq!(super::subtract(vec![Sexp::Number(1.)]), Ok(Sexp::Number(-1.)));
         assert_eq!(super::subtract(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
                    Ok(Sexp::Number(-4.)));
-        assert_eq!(super::subtract(vec![Sexp::Number(1.),
-                                   Sexp::Number(2.),
-                                   Sexp::String("3".to_string())]),
+        assert_eq!(super::subtract(vec![Sexp::String("3".to_string())]),
                    Err("Argument error: \"3\"".to_string()));
         assert_eq!(super::subtract(vec![]), Err("Invalid number of arguments: 0".to_string()));
     }
@@ -115,9 +111,7 @@ mod tests {
         assert_eq!(super::multiply(vec![Sexp::Number(1.)]), Ok(Sexp::Number(1.)));
         assert_eq!(super::multiply(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
                    Ok(Sexp::Number(6.)));
-        assert_eq!(super::multiply(vec![Sexp::Number(1.),
-                                   Sexp::Number(2.),
-                                   Sexp::String("3".to_string())]),
+        assert_eq!(super::multiply(vec![Sexp::String("3".to_string())]),
                    Err("Argument error: \"3\"".to_string()));
     }
 }
