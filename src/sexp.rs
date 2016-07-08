@@ -47,6 +47,16 @@ impl Sexp {
                             }
                         }
                     },
+                    Some("if") => {
+                        match v[1] {
+                            Sexp::Nil => {
+                                v[3].eval(&env)
+                            },
+                            _ => {
+                                v[2].eval(&env)
+                            },
+                        }
+                    },
                     _ => {
                         let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
                         evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
@@ -91,7 +101,8 @@ fn special_form(v: &Vec<Sexp>) -> Option<&str> {
     match v[0] {
         Sexp::Symbol(ref s) => {
             match &s[..] {
-                s @ "defparameter" => Some(&s),
+                s @ "defparameter" |
+                s @ "if" => Some(&s),
                 _ => None,
             }
         },
@@ -174,6 +185,28 @@ mod tests {
                                    Sexp::Number(5.),
                                    Sexp::Number(5.)]).eval(&env),
                    Err("5 is not a legal info name".to_string()));
+    }
+
+    #[test]
+    fn test_eval_with_if() {
+        let env = env::env_new(None);
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("if".to_string()),
+                                   Sexp::True,
+                                   Sexp::Number(1.),
+                                   Sexp::Number(2.)]).eval(&env),
+                   Ok(Sexp::Number(1.)));
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("if".to_string()),
+                                   Sexp::True,
+                                   Sexp::Number(1.),
+                                   Sexp::Number(2.)]).eval(&env),
+                   Ok(Sexp::Number(1.)));
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("if".to_string()),
+                                   Sexp::Nil,
+                                   Sexp::Number(1.),
+                                   Sexp::Number(2.)]).eval(&env),
+                   Ok(Sexp::Number(2.)));
     }
 
     fn ok(_: Vec<Sexp>) -> SexpResult {
