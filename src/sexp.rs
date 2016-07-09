@@ -33,35 +33,10 @@ impl Sexp {
                     return Ok(Sexp::Nil);
                 }
 
-                match special_form(&v) {
-                    Some("defparameter") => {
-                        match v[1] {
-                            Sexp::Symbol(ref s) => {
-                                v[2].eval(&env).and_then(|evaled| {
-                                    env::env_set(&env, s.clone(), evaled);
-                                    Ok(Sexp::Symbol(s.clone()))
-                                })
-                            },
-                            ref e @ _ => {
-                                Err(format!("{} is not a legal info name", e))
-                            }
-                        }
-                    },
-                    Some("if") => {
-                        match v[1] {
-                            Sexp::Nil => {
-                                v[3].eval(&env)
-                            },
-                            _ => {
-                                v[2].eval(&env)
-                            },
-                        }
-                    },
-                    _ => {
-                        let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
-                        evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
-                    },
-                }
+                process_special_form(&v, &env).unwrap_or_else(|| {
+                    let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(&env)).collect();
+                    evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
+                })
             }
         }
     }
@@ -97,12 +72,33 @@ impl fmt::Display for Sexp {
     }
 }
 
-fn special_form(v: &Vec<Sexp>) -> Option<&str> {
+fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
     match v[0] {
         Sexp::Symbol(ref s) => {
             match &s[..] {
-                s @ "defparameter" |
-                s @ "if" => Some(&s),
+                "defparameter" => {
+                    match v[1] {
+                        Sexp::Symbol(ref s) => {
+                            Some(v[2].eval(&env).and_then(|evaled| {
+                                env::env_set(&env, s.clone(), evaled);
+                                Ok(Sexp::Symbol(s.clone()))
+                            }))
+                        },
+                        ref e @ _ => {
+                            Some(Err(format!("{} is not a legal info name", e)))
+                        }
+                    }
+                },
+                "if" => {
+                    match v[1] {
+                        Sexp::Nil => {
+                            Some(v[3].eval(&env))
+                        },
+                        _ => {
+                            Some(v[2].eval(&env))
+                        },
+                    }
+                },
                 _ => None,
             }
         },
