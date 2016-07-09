@@ -82,6 +82,18 @@ fn divide(args: Vec<Sexp>) -> SexpResult {
     Ok(Sexp::Number(rest.iter().fold(first, |result, n| result / *n)))
 }
 
+fn numberp(args: Vec<Sexp>) -> SexpResult {
+    let len = args.len();
+    if len != 1 {
+        return Err(format!("Invalid number of arguments: {}", len));
+    }
+
+    match args[0] {
+        Sexp::Number(_) => Ok(Sexp::True),
+        _ => Ok(Sexp::Nil),
+    }
+}
+
 pub fn default_env() -> Env {
     let env = env::env_new(None);
     env::env_set(&env, "t".to_string(), Sexp::True);
@@ -90,6 +102,7 @@ pub fn default_env() -> Env {
     env::env_set(&env, "-".to_string(), Sexp::BuiltInFunc(subtract));
     env::env_set(&env, "*".to_string(), Sexp::BuiltInFunc(multiply));
     env::env_set(&env, "/".to_string(), Sexp::BuiltInFunc(divide));
+    env::env_set(&env, "numberp".to_string(), Sexp::BuiltInFunc(numberp));
 
     env
 }
@@ -140,5 +153,15 @@ mod tests {
                    Err("Argument error: \"3\"".to_string()));
         assert_eq!(super::divide(vec![Sexp::Number(1.), Sexp::Number(0.)]),
                    Err("Division by zero".to_string()));
+    }
+
+    #[test]
+    fn test_numberp() {
+        assert_eq!(super::numberp(vec![Sexp::Number(1.)]), Ok(Sexp::True));
+        assert_eq!(super::numberp(vec![Sexp::True]), Ok(Sexp::Nil));
+        assert_eq!(super::numberp(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
+        assert_eq!(super::numberp(vec![Sexp::True, Sexp::True]),
+                   Err("Invalid number of arguments: 2".to_string()));
     }
 }
