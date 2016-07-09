@@ -54,7 +54,7 @@ impl fmt::Display for Sexp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Sexp::Number(ref n) => write!(f, "{}", n),
-            Sexp::String(ref s) => write!(f, "\"{}\"", s),
+            Sexp::String(ref s) => write!(f, "\"{}\"", s.to_uppercase()),
             Sexp::Symbol(ref s) => write!(f, "{}", s),
             Sexp::BuiltInFunc(_) => write!(f, "<fn>"),
             Sexp::List(ref v) => {

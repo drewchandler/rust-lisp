@@ -24,13 +24,13 @@ pub fn env_new(enclosing: Option<Env>) -> Env {
 }
 
 pub fn env_set(env: &Env, k: String, v: Sexp) {
-    env.borrow_mut().data.insert(k, v);
+    env.borrow_mut().data.insert(k.to_uppercase(), v);
 }
 
 pub fn env_get(env: &Env, k: &String) -> Option<Sexp> {
     let e = env.borrow();
 
-    match e.data.get(k) {
+    match e.data.get(&k.to_uppercase()) {
         Some(v) => Some((*v).clone()),
         None => {
             match e.enclosing {
@@ -45,6 +45,14 @@ pub fn env_get(env: &Env, k: &String) -> Option<Sexp> {
 mod tests {
     use super::super::sexp::Sexp;
     use super::{env_new, env_get, env_set};
+
+    #[test]
+    fn test_get_is_case_insensitive() {
+        let env = env_new(None);
+
+        env_set(&env, "k".to_string(), Sexp::Number(5.0));
+        assert_eq!(env_get(&env, &"K".to_string()), Some(Sexp::Number(5.0)));
+    }
 
     #[test]
     fn test_get_and_set_with_no_enclosing_env() {
