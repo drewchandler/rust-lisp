@@ -94,6 +94,7 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
                         _ => Some(v[2].eval(&env)),
                     }
                 }
+                "quote" => Some(Ok(v[1].clone())),
                 _ => None,
             }
         }
@@ -203,6 +204,16 @@ mod tests {
                                    Sexp::Number(2.)])
                        .eval(&env),
                    Ok(Sexp::Number(2.)));
+    }
+
+    #[test]
+    fn test_eval_with_quote() {
+        let env = env::env_new(None);
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("quote".to_string()),
+                                   Sexp::List(vec![Sexp::Number(5.)])])
+                       .eval(&env),
+                   Ok(Sexp::List(vec![Sexp::Number(5.)])));
     }
 
     fn ok(_: Vec<Sexp>) -> SexpResult {
