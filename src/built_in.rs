@@ -76,7 +76,7 @@ fn divide(args: Vec<Sexp>) -> SexpResult {
     let (first, rest) = unpack_args!(args, 1 Sexp::Number, N Sexp::Number);
 
     if rest.iter().any(|&n| n == 0.) {
-        return Err("Division by zero".to_string())
+        return Err("Division by zero".to_string());
     }
 
     Ok(Sexp::Number(rest.iter().fold(first, |result, n| result / *n)))
@@ -109,17 +109,20 @@ mod tests {
 
     #[test]
     fn test_subtract() {
-        assert_eq!(super::subtract(vec![Sexp::Number(1.)]), Ok(Sexp::Number(-1.)));
+        assert_eq!(super::subtract(vec![Sexp::Number(1.)]),
+                   Ok(Sexp::Number(-1.)));
         assert_eq!(super::subtract(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
                    Ok(Sexp::Number(-4.)));
         assert_eq!(super::subtract(vec![Sexp::String("3".to_string())]),
                    Err("Argument error: \"3\"".to_string()));
-        assert_eq!(super::subtract(vec![]), Err("Invalid number of arguments: 0".to_string()));
+        assert_eq!(super::subtract(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
     }
 
     #[test]
     fn test_multiply() {
-        assert_eq!(super::multiply(vec![Sexp::Number(1.)]), Ok(Sexp::Number(1.)));
+        assert_eq!(super::multiply(vec![Sexp::Number(1.)]),
+                   Ok(Sexp::Number(1.)));
         assert_eq!(super::multiply(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
                    Ok(Sexp::Number(6.)));
         assert_eq!(super::multiply(vec![Sexp::String("3".to_string())]),
@@ -130,8 +133,9 @@ mod tests {
     fn test_divide() {
         assert_eq!(super::divide(vec![Sexp::Number(1.)]), Ok(Sexp::Number(1.)));
         assert_eq!(super::divide(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
-                   Ok(Sexp::Number(1.0/6.0)));
-        assert_eq!(super::divide(vec![]), Err("Invalid number of arguments: 0".to_string()));
+                   Ok(Sexp::Number(1.0 / 6.0)));
+        assert_eq!(super::divide(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
         assert_eq!(super::divide(vec![Sexp::String("3".to_string())]),
                    Err("Argument error: \"3\"".to_string()));
         assert_eq!(super::divide(vec![Sexp::Number(1.), Sexp::Number(0.)]),
