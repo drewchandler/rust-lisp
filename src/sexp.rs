@@ -9,6 +9,16 @@ pub struct FuncData {
     env: Env,
 }
 
+impl FuncData {
+    fn new(params: Vec<String>, body: Sexp, env: Env) -> FuncData {
+        FuncData {
+            params: params,
+            body: Box::new(body),
+            env: env
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum Sexp {
     Number(f64),
@@ -175,11 +185,11 @@ mod tests {
     #[test]
     fn test_eval_with_user_func_in_front() {
         let env = env::env_new(None);
-        let func_data = FuncData {
-            params: vec!["n".to_string()],
-            body: Box::new(Sexp::Symbol("n".to_string())),
-            env: env.clone()
-        };
+        let func_data = FuncData::new(
+            vec!["n".to_string()],
+            Sexp::Symbol("n".to_string()),
+            env.clone()
+        );
         env::env_set(&env, "func".to_string(), Sexp::UserFunc(func_data));
 
         assert_eq!(Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
