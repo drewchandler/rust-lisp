@@ -14,6 +14,20 @@ macro_rules! extract_value {
     };
 }
 
+macro_rules! extract_values {
+    ($src:expr, $t:path) => {
+        match $src {
+            Sexp::List(ref v) => {
+                let extracted: Result<Vec<_>, String> = v.iter().map(|i| {
+                    extract_value!(*i, $t)
+                }).collect();
+                extracted
+            },
+            ref v @ _ => Err(format!("Argument error: {}", v))
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct FuncData {
     params: Vec<String>,
@@ -118,6 +132,7 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
         Sexp::Symbol(ref s) => {
             match &s[..] {
                 "defparameter" => Some(defparameter(&v, &env)),
+                "defun" => Some(defun(&v, &env)),
                 "if" => {
                     match v[1] {
                         Sexp::Nil => Some(v[3].eval(&env)),
@@ -137,6 +152,16 @@ fn defparameter(v: &Vec<Sexp>, env: &Env) -> SexpResult {
     let value = try!(v[2].eval(&env));
 
     env::env_set(&env, name.clone(), value);
+    Ok(Sexp::Symbol(name))
+}
+
+fn defun(v: &Vec<Sexp>, env: &Env) -> SexpResult {
+    let name = try!(extract_value!(v[1], Sexp::Symbol));
+    let params = try!(extract_values!(v[2], Sexp::Symbol));
+
+    env::env_set(&env,
+                 name.clone(),
+                 Sexp::UserFunc(FuncData::new(params, v[3].clone(), env.clone())));
     Ok(Sexp::Symbol(name))
 }
 
@@ -264,6 +289,18 @@ mod tests {
                                    Sexp::List(vec![Sexp::Number(5.)])])
                        .eval(&env),
                    Ok(Sexp::List(vec![Sexp::Number(5.)])));
+    }
+
+    #[test]
+    fn test_eval_with_defun() {
+        let env = env::env_new(None);
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("defun".to_string()),
+                                   Sexp::Symbol("identity".to_string()),
+                                   Sexp::List(vec![Sexp::Symbol("n".to_string())]),
+                                   Sexp::Symbol("n".to_string())])
+                       .eval(&env),
+                   Ok(Sexp::Symbol("identity".to_string())));
     }
 
     fn ok(_: Vec<Sexp>) -> SexpResult {
