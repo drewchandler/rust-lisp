@@ -1,6 +1,18 @@
 use std::fmt;
 use super::env::{self, Env};
 
+macro_rules! extract_value {
+    ($src:expr, $t:path) => {
+        extract_value!($src, $t, "Argument error: {}")
+    };
+
+    ($src:expr, $t:path, $error:expr) => {
+        match $src {
+            $t(ref v) => Ok(v.clone()),
+            ref v @ _ => Err(format!($error, v)),
+        }
+    };
+}
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct FuncData {
@@ -105,17 +117,7 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
     match v[0] {
         Sexp::Symbol(ref s) => {
             match &s[..] {
-                "defparameter" => {
-                    match v[1] {
-                        Sexp::Symbol(ref s) => {
-                            Some(v[2].eval(&env).and_then(|evaled| {
-                                env::env_set(&env, s.clone(), evaled);
-                                Ok(Sexp::Symbol(s.clone()))
-                            }))
-                        }
-                        ref e @ _ => Some(Err(format!("{} is not a legal info name", e))),
-                    }
-                }
+                "defparameter" => Some(defparameter(&v, &env)),
                 "if" => {
                     match v[1] {
                         Sexp::Nil => Some(v[3].eval(&env)),
@@ -128,6 +130,14 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
         }
         _ => None,
     }
+}
+
+fn defparameter(v: &Vec<Sexp>, env: &Env) -> SexpResult {
+    let name = try!(extract_value!(v[1], Sexp::Symbol, "{} is not a legal info name"));
+    let value = try!(v[2].eval(&env));
+
+    env::env_set(&env, name.clone(), value);
+    Ok(Sexp::Symbol(name))
 }
 
 #[cfg(test)]
