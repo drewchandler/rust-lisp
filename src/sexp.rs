@@ -46,15 +46,22 @@ impl Sexp {
                 process_special_form(&v, &env).unwrap_or_else(|| {
                     let evaled: Result<Vec<Sexp>, String> =
                         v.iter().map(|s| s.eval(&env)).collect();
-                    evaled.and_then(|v| v[0].apply(v[1..].to_vec(), &env))
+                    evaled.and_then(|v| v[0].apply(v[1..].to_vec()))
                 })
             }
         }
     }
 
-    fn apply(&self, args: Vec<Sexp>, env: &Env) -> SexpResult {
+    fn apply(&self, args: Vec<Sexp>) -> SexpResult {
         match *self {
             Sexp::BuiltInFunc(f) => f(args),
+            Sexp::UserFunc(ref d) => {
+                let env = env::env_new(Some(d.env.clone()));
+                for (k, v) in d.params.iter().zip(args.iter()) {
+                    env::env_set(&env, k.clone(), v.clone());
+                }
+                d.body.eval(&env)
+            },
             _ => Err("Illegal function call".to_string()),
         }
     }
@@ -114,7 +121,7 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Sexp, SexpResult};
+    use super::{Sexp, SexpResult, FuncData};
     use super::super::env;
 
     #[test]
@@ -163,6 +170,20 @@ mod tests {
 
         assert_eq!(Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
                    Err("BOOM".to_string()));
+    }
+
+    #[test]
+    fn test_eval_with_user_func_in_front() {
+        let env = env::env_new(None);
+        let func_data = FuncData {
+            params: vec!["n".to_string()],
+            body: Box::new(Sexp::Symbol("n".to_string())),
+            env: env.clone()
+        };
+        env::env_set(&env, "func".to_string(), Sexp::UserFunc(func_data));
+
+        assert_eq!(Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
+                   Ok(Sexp::Number(5.)));
     }
 
     #[test]
