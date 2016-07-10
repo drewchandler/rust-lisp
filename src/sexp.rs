@@ -1,6 +1,14 @@
 use std::fmt;
 use super::env::{self, Env};
 
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct FuncData {
+    params: Vec<String>,
+    body: Box<Sexp>,
+    env: Env,
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum Sexp {
     Number(f64),
@@ -8,6 +16,7 @@ pub enum Sexp {
     Symbol(String),
     List(Vec<Sexp>),
     BuiltInFunc(fn(Vec<Sexp>) -> SexpResult),
+    UserFunc(FuncData),
     Nil,
     True,
 }
@@ -20,6 +29,7 @@ impl Sexp {
             ref s @ Sexp::Number(_) |
             ref s @ Sexp::String(_) |
             ref s @ Sexp::BuiltInFunc(_) |
+            ref s @ Sexp::UserFunc(_) |
             ref s @ Sexp::Nil |
             ref s @ Sexp::True => Ok(s.clone()),
             Sexp::Symbol(ref s) => {
@@ -56,7 +66,7 @@ impl fmt::Display for Sexp {
             Sexp::Number(ref n) => write!(f, "{}", n),
             Sexp::String(ref s) => write!(f, "\"{}\"", s.to_uppercase()),
             Sexp::Symbol(ref s) => write!(f, "{}", s),
-            Sexp::BuiltInFunc(_) => write!(f, "<fn>"),
+            Sexp::BuiltInFunc(_) | Sexp::UserFunc(_) => write!(f, "<fn>"),
             Sexp::List(ref v) => {
                 try!(write!(f, "("));
                 for (i, s) in v.iter().enumerate() {

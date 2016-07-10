@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use super::sexp::Sexp;
 
+#[derive(PartialEq, Debug)]
 pub struct EnvData {
     data: HashMap<String, Sexp>,
     enclosing: Option<Env>,
