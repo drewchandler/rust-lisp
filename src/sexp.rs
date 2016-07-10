@@ -14,7 +14,7 @@ impl FuncData {
         FuncData {
             params: params,
             body: Box::new(body),
-            env: env
+            env: env,
         }
     }
 }
@@ -71,7 +71,7 @@ impl Sexp {
                     env::env_set(&env, k.clone(), v.clone());
                 }
                 d.body.eval(&env)
-            },
+            }
             _ => Err("Illegal function call".to_string()),
         }
     }
@@ -83,7 +83,8 @@ impl fmt::Display for Sexp {
             Sexp::Number(ref n) => write!(f, "{}", n),
             Sexp::String(ref s) => write!(f, "\"{}\"", s.to_uppercase()),
             Sexp::Symbol(ref s) => write!(f, "{}", s),
-            Sexp::BuiltInFunc(_) | Sexp::UserFunc(_) => write!(f, "<fn>"),
+            Sexp::BuiltInFunc(_) |
+            Sexp::UserFunc(_) => write!(f, "<fn>"),
             Sexp::List(ref v) => {
                 try!(write!(f, "("));
                 for (i, s) in v.iter().enumerate() {
@@ -185,11 +186,9 @@ mod tests {
     #[test]
     fn test_eval_with_user_func_in_front() {
         let env = env::env_new(None);
-        let func_data = FuncData::new(
-            vec!["n".to_string()],
-            Sexp::Symbol("n".to_string()),
-            env.clone()
-        );
+        let func_data = FuncData::new(vec!["n".to_string()],
+                                      Sexp::Symbol("n".to_string()),
+                                      env.clone());
         env::env_set(&env, "func".to_string(), Sexp::UserFunc(func_data));
 
         assert_eq!(Sexp::List(vec![Sexp::Symbol("func".to_string()), Sexp::Number(5.)]).eval(&env),
