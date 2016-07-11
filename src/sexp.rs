@@ -133,12 +133,7 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
             match &s[..] {
                 "defparameter" => Some(defparameter(&v, &env)),
                 "defun" => Some(defun(&v, &env)),
-                "if" => {
-                    match v[1] {
-                        Sexp::Nil => Some(v[3].eval(&env)),
-                        _ => Some(v[2].eval(&env)),
-                    }
-                }
+                "if" => Some(if_special_form(&v, &env)),
                 "quote" => Some(Ok(v[1].clone())),
                 _ => None,
             }
@@ -163,6 +158,15 @@ fn defun(v: &Vec<Sexp>, env: &Env) -> SexpResult {
                  name.clone(),
                  Sexp::UserFunc(FuncData::new(params, v[3].clone(), env.clone())));
     Ok(Sexp::Symbol(name))
+}
+
+fn if_special_form(v: &Vec<Sexp>, env: &Env) -> SexpResult {
+    let conditional = try!(v[1].eval(&env));
+
+    match conditional {
+        Sexp::Nil => v[3].eval(&env),
+        _ => v[2].eval(&env),
+    }
 }
 
 #[cfg(test)]
