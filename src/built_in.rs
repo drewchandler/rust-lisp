@@ -94,6 +94,36 @@ fn numberp(args: Vec<Sexp>) -> SexpResult {
     }
 }
 
+fn lt(args: Vec<Sexp>) -> SexpResult {
+    let len = args.len();
+    if len == 0 {
+        return Err(format!("Invalid number of arguments: {}", len));
+    }
+
+    let ns = unpack_args!(args, N Sexp::Number);
+
+    if ns.iter().zip(ns.iter().skip(1)).all(|(a, b)| a < b) {
+        Ok(Sexp::True)
+    } else {
+        Ok(Sexp::Nil)
+    }
+}
+
+fn lte(args: Vec<Sexp>) -> SexpResult {
+    let len = args.len();
+    if len == 0 {
+        return Err(format!("Invalid number of arguments: {}", len));
+    }
+
+    let ns = unpack_args!(args, N Sexp::Number);
+
+    if ns.iter().zip(ns.iter().skip(1)).all(|(a, b)| a <= b) {
+        Ok(Sexp::True)
+    } else {
+        Ok(Sexp::Nil)
+    }
+}
+
 pub fn default_env() -> Env {
     let env = env::env_new(None);
     env::env_set(&env, "t".to_string(), Sexp::True);
@@ -103,6 +133,8 @@ pub fn default_env() -> Env {
     env::env_set(&env, "*".to_string(), Sexp::BuiltInFunc(multiply));
     env::env_set(&env, "/".to_string(), Sexp::BuiltInFunc(divide));
     env::env_set(&env, "numberp".to_string(), Sexp::BuiltInFunc(numberp));
+    env::env_set(&env, "<".to_string(), Sexp::BuiltInFunc(lt));
+    env::env_set(&env, "<=".to_string(), Sexp::BuiltInFunc(lte));
 
     env
 }
@@ -163,5 +195,31 @@ mod tests {
                    Err("Invalid number of arguments: 0".to_string()));
         assert_eq!(super::numberp(vec![Sexp::True, Sexp::True]),
                    Err("Invalid number of arguments: 2".to_string()));
+    }
+
+    #[test]
+    fn test_lt() {
+        assert_eq!(super::lt(vec![Sexp::Number(1.)]), Ok(Sexp::True));
+        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(2.)]), Ok(Sexp::True));
+        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]), Ok(Sexp::True));
+
+        assert_eq!(super::lt(vec![Sexp::Number(2.), Sexp::Number(1.)]), Ok(Sexp::Nil));
+        assert_eq!(super::lt(vec![Sexp::Number(2.), Sexp::Number(2.)]), Ok(Sexp::Nil));
+        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(3.), Sexp::Number(2.)]), Ok(Sexp::Nil));
+
+        assert_eq!(super::lt(vec![]), Err("Invalid number of arguments: 0".to_string()));
+    }
+
+    #[test]
+    fn test_lte() {
+        assert_eq!(super::lte(vec![Sexp::Number(1.)]), Ok(Sexp::True));
+        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(2.)]), Ok(Sexp::True));
+        assert_eq!(super::lte(vec![Sexp::Number(2.), Sexp::Number(2.)]), Ok(Sexp::True));
+        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]), Ok(Sexp::True));
+
+        assert_eq!(super::lte(vec![Sexp::Number(2.), Sexp::Number(1.)]), Ok(Sexp::Nil));
+        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(3.), Sexp::Number(2.)]), Ok(Sexp::Nil));
+
+        assert_eq!(super::lte(vec![]), Err("Invalid number of arguments: 0".to_string()));
     }
 }
