@@ -200,26 +200,38 @@ mod tests {
     #[test]
     fn test_lt() {
         assert_eq!(super::lt(vec![Sexp::Number(1.)]), Ok(Sexp::True));
-        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(2.)]), Ok(Sexp::True));
-        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]), Ok(Sexp::True));
+        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(2.)]),
+                   Ok(Sexp::True));
+        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
+                   Ok(Sexp::True));
 
-        assert_eq!(super::lt(vec![Sexp::Number(2.), Sexp::Number(1.)]), Ok(Sexp::Nil));
-        assert_eq!(super::lt(vec![Sexp::Number(2.), Sexp::Number(2.)]), Ok(Sexp::Nil));
-        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(3.), Sexp::Number(2.)]), Ok(Sexp::Nil));
+        assert_eq!(super::lt(vec![Sexp::Number(2.), Sexp::Number(1.)]),
+                   Ok(Sexp::Nil));
+        assert_eq!(super::lt(vec![Sexp::Number(2.), Sexp::Number(2.)]),
+                   Ok(Sexp::Nil));
+        assert_eq!(super::lt(vec![Sexp::Number(1.), Sexp::Number(3.), Sexp::Number(2.)]),
+                   Ok(Sexp::Nil));
 
-        assert_eq!(super::lt(vec![]), Err("Invalid number of arguments: 0".to_string()));
+        assert_eq!(super::lt(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
     }
 
     #[test]
     fn test_lte() {
         assert_eq!(super::lte(vec![Sexp::Number(1.)]), Ok(Sexp::True));
-        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(2.)]), Ok(Sexp::True));
-        assert_eq!(super::lte(vec![Sexp::Number(2.), Sexp::Number(2.)]), Ok(Sexp::True));
-        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]), Ok(Sexp::True));
+        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(2.)]),
+                   Ok(Sexp::True));
+        assert_eq!(super::lte(vec![Sexp::Number(2.), Sexp::Number(2.)]),
+                   Ok(Sexp::True));
+        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(2.), Sexp::Number(3.)]),
+                   Ok(Sexp::True));
 
-        assert_eq!(super::lte(vec![Sexp::Number(2.), Sexp::Number(1.)]), Ok(Sexp::Nil));
-        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(3.), Sexp::Number(2.)]), Ok(Sexp::Nil));
+        assert_eq!(super::lte(vec![Sexp::Number(2.), Sexp::Number(1.)]),
+                   Ok(Sexp::Nil));
+        assert_eq!(super::lte(vec![Sexp::Number(1.), Sexp::Number(3.), Sexp::Number(2.)]),
+                   Ok(Sexp::Nil));
 
-        assert_eq!(super::lte(vec![]), Err("Invalid number of arguments: 0".to_string()));
+        assert_eq!(super::lte(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
     }
 }
