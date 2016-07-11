@@ -112,6 +112,8 @@ fn numeric_comparison<F>(args: Vec<Sexp>, f: F) -> SexpResult
 
 fn lt(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a < b) }
 fn lte(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a <= b) }
+fn gt(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a > b) }
+fn gte(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a >= b) }
 
 pub fn default_env() -> Env {
     let env = env::env_new(None);
@@ -124,6 +126,8 @@ pub fn default_env() -> Env {
     env::env_set(&env, "numberp".to_string(), Sexp::BuiltInFunc(numberp));
     env::env_set(&env, "<".to_string(), Sexp::BuiltInFunc(lt));
     env::env_set(&env, "<=".to_string(), Sexp::BuiltInFunc(lte));
+    env::env_set(&env, ">".to_string(), Sexp::BuiltInFunc(gt));
+    env::env_set(&env, ">=".to_string(), Sexp::BuiltInFunc(gte));
 
     env
 }
@@ -221,6 +225,44 @@ mod tests {
                    Ok(Sexp::Nil));
 
         assert_eq!(super::lte(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
+    }
+
+    #[test]
+    fn test_gt() {
+        assert_eq!(super::gt(vec![Sexp::Number(1.)]), Ok(Sexp::True));
+        assert_eq!(super::gt(vec![Sexp::Number(2.), Sexp::Number(1.)]),
+                   Ok(Sexp::True));
+        assert_eq!(super::gt(vec![Sexp::Number(3.), Sexp::Number(2.), Sexp::Number(1.)]),
+                   Ok(Sexp::True));
+
+        assert_eq!(super::gt(vec![Sexp::Number(1.), Sexp::Number(2.)]),
+                   Ok(Sexp::Nil));
+        assert_eq!(super::gt(vec![Sexp::Number(2.), Sexp::Number(2.)]),
+                   Ok(Sexp::Nil));
+        assert_eq!(super::gt(vec![Sexp::Number(2.), Sexp::Number(1.), Sexp::Number(3.)]),
+                   Ok(Sexp::Nil));
+
+        assert_eq!(super::gt(vec![]),
+                   Err("Invalid number of arguments: 0".to_string()));
+    }
+
+    #[test]
+    fn test_gte() {
+        assert_eq!(super::gte(vec![Sexp::Number(1.)]), Ok(Sexp::True));
+        assert_eq!(super::gte(vec![Sexp::Number(2.), Sexp::Number(1.)]),
+                   Ok(Sexp::True));
+        assert_eq!(super::gte(vec![Sexp::Number(2.), Sexp::Number(2.)]),
+                   Ok(Sexp::True));
+        assert_eq!(super::gte(vec![Sexp::Number(3.), Sexp::Number(2.), Sexp::Number(1.)]),
+                   Ok(Sexp::True));
+
+        assert_eq!(super::gte(vec![Sexp::Number(1.), Sexp::Number(2.)]),
+                   Ok(Sexp::Nil));
+        assert_eq!(super::gte(vec![Sexp::Number(2.), Sexp::Number(1.), Sexp::Number(3.)]),
+                   Ok(Sexp::Nil));
+
+        assert_eq!(super::gte(vec![]),
                    Err("Invalid number of arguments: 0".to_string()));
     }
 }
