@@ -26,7 +26,7 @@ macro_rules! unpack_arg {
             .map(|i| {
                 match *i {
                     $rest(ref n) => Ok(*n),
-                    ref v @ _ => Err(format!("Argument error: {}", v)),
+                    ref v => Err(format!("Argument error: {}", v)),
                 }
             })
             .collect();
@@ -45,7 +45,7 @@ macro_rules! unpack_arg {
 
         match *tmp.unwrap() {
             $t(ref n) => *n,
-            ref v @ _ => return Err(format!("Argument error: {}", v)),
+            ref v => return Err(format!("Argument error: {}", v)),
         }
     }};
 }
@@ -59,7 +59,7 @@ fn add(args: Vec<Sexp>) -> SexpResult {
 fn subtract(args: Vec<Sexp>) -> SexpResult {
     let (first, rest) = unpack_args!(args, 1 Sexp::Number, N Sexp::Number);
 
-    if rest.len() == 0 {
+    if rest.is_empty() {
         Ok(Sexp::Number(0. - first))
     } else {
         Ok(Sexp::Number(rest.iter().fold(first, |result, n| result - *n)))

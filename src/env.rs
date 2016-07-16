@@ -28,14 +28,14 @@ pub fn env_set(env: &Env, k: String, v: Sexp) {
     env.borrow_mut().data.insert(k.to_uppercase(), v);
 }
 
-pub fn env_get(env: &Env, k: &String) -> Option<Sexp> {
+pub fn env_get(env: &Env, k: &str) -> Option<Sexp> {
     let e = env.borrow();
 
     match e.data.get(&k.to_uppercase()) {
         Some(v) => Some((*v).clone()),
         None => {
             match e.enclosing {
-                Some(ref enc) => env_get(&enc, k),
+                Some(ref enc) => env_get(enc, k),
                 None => None,
             }
         }

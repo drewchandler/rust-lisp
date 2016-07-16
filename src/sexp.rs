@@ -9,7 +9,7 @@ macro_rules! extract_value {
     ($src:expr, $t:path, $error:expr) => {
         match $src {
             $t(ref v) => Ok(v.clone()),
-            ref v @ _ => Err(format!($error, v)),
+            ref v => Err(format!($error, v)),
         }
     };
 }
@@ -18,12 +18,9 @@ macro_rules! extract_values {
     ($src:expr, $t:path) => {
         match $src {
             Sexp::List(ref v) => {
-                let extracted: Result<Vec<_>, String> = v.iter().map(|i| {
-                    extract_value!(*i, $t)
-                }).collect();
-                extracted
+                v.iter().map(|i| { extract_value!(*i, $t) }).collect()
             },
-            ref v @ _ => Err(format!("Argument error: {}", v))
+            ref v => Err(format!("Argument error: {}", v))
         }
     }
 }
@@ -69,19 +66,18 @@ impl Sexp {
             ref s @ Sexp::Nil |
             ref s @ Sexp::True => Ok(s.clone()),
             Sexp::Symbol(ref s) => {
-                match env::env_get(&env, &s) {
+                match env::env_get(env, s) {
                     Some(v) => Ok(v.clone()),
                     None => Err(format!("The variable {} is unbound", &s)),
                 }
             }
             Sexp::List(ref v) => {
-                if v.len() == 0 {
+                if v.is_empty() {
                     return Ok(Sexp::Nil);
                 }
 
-                process_special_form(&v, &env).unwrap_or_else(|| {
-                    let evaled: Result<Vec<Sexp>, String> =
-                        v.iter().map(|s| s.eval(&env)).collect();
+                process_special_form(v, env).unwrap_or_else(|| {
+                    let evaled: Result<Vec<Sexp>, String> = v.iter().map(|s| s.eval(env)).collect();
                     evaled.and_then(|v| v[0].apply(v[1..].to_vec()))
                 })
             }
@@ -127,13 +123,13 @@ impl fmt::Display for Sexp {
     }
 }
 
-fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
+fn process_special_form(v: &[Sexp], env: &Env) -> Option<SexpResult> {
     match v[0] {
         Sexp::Symbol(ref s) => {
             match &s[..] {
-                "defparameter" => Some(defparameter(&v, &env)),
-                "defun" => Some(defun(&v, &env)),
-                "if" => Some(if_special_form(&v, &env)),
+                "defparameter" => Some(defparameter(v, env)),
+                "defun" => Some(defun(v, env)),
+                "if" => Some(if_special_form(v, env)),
                 "quote" => Some(Ok(v[1].clone())),
                 _ => None,
             }
@@ -142,30 +138,30 @@ fn process_special_form(v: &Vec<Sexp>, env: &Env) -> Option<SexpResult> {
     }
 }
 
-fn defparameter(v: &Vec<Sexp>, env: &Env) -> SexpResult {
+fn defparameter(v: &[Sexp], env: &Env) -> SexpResult {
     let name = try!(extract_value!(v[1], Sexp::Symbol, "{} is not a legal info name"));
     let value = try!(v[2].eval(&env));
 
-    env::env_set(&env, name.clone(), value);
+    env::env_set(env, name.clone(), value);
     Ok(Sexp::Symbol(name))
 }
 
-fn defun(v: &Vec<Sexp>, env: &Env) -> SexpResult {
+fn defun(v: &[Sexp], env: &Env) -> SexpResult {
     let name = try!(extract_value!(v[1], Sexp::Symbol));
     let params = try!(extract_values!(v[2], Sexp::Symbol));
 
-    env::env_set(&env,
+    env::env_set(env,
                  name.clone(),
                  Sexp::UserFunc(FuncData::new(params, v[3].clone(), env.clone())));
     Ok(Sexp::Symbol(name))
 }
 
-fn if_special_form(v: &Vec<Sexp>, env: &Env) -> SexpResult {
+fn if_special_form(v: &[Sexp], env: &Env) -> SexpResult {
     let conditional = try!(v[1].eval(&env));
 
     match conditional {
-        Sexp::Nil => v[3].eval(&env),
-        _ => v[2].eval(&env),
+        Sexp::Nil => v[3].eval(env),
+        _ => v[2].eval(env),
     }
 }
 
