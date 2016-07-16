@@ -95,7 +95,8 @@ fn numberp(args: Vec<Sexp>) -> SexpResult {
 }
 
 fn numeric_comparison<F>(args: Vec<Sexp>, f: F) -> SexpResult
-    where F: FnMut((&f64, &f64)) -> bool {
+    where F: FnMut((&f64, &f64)) -> bool
+{
     let len = args.len();
     if len == 0 {
         return Err(format!("Invalid number of arguments: {}", len));
@@ -110,10 +111,18 @@ fn numeric_comparison<F>(args: Vec<Sexp>, f: F) -> SexpResult
     }
 }
 
-fn lt(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a < b) }
-fn lte(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a <= b) }
-fn gt(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a > b) }
-fn gte(args: Vec<Sexp>) -> SexpResult { numeric_comparison(args, |(a, b)| a >= b) }
+fn lt(args: Vec<Sexp>) -> SexpResult {
+    numeric_comparison(args, |(a, b)| a < b)
+}
+fn lte(args: Vec<Sexp>) -> SexpResult {
+    numeric_comparison(args, |(a, b)| a <= b)
+}
+fn gt(args: Vec<Sexp>) -> SexpResult {
+    numeric_comparison(args, |(a, b)| a > b)
+}
+fn gte(args: Vec<Sexp>) -> SexpResult {
+    numeric_comparison(args, |(a, b)| a >= b)
+}
 
 pub fn default_env() -> Env {
     let env = env::env_new(None);
